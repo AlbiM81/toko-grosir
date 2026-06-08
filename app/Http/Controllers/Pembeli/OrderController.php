@@ -8,7 +8,9 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+
 
 class OrderController extends Controller
 {
@@ -31,8 +33,8 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'address' => 'required|string',
-            'phone'   => 'required|string|max:20',
+            'address' => 'required|string|max:500',
+            'phone'   => 'required|string|max:20|regex:/^[0-9+\-\s]+$/',
         ]);
 
         $carts = Cart::with('product')
@@ -44,10 +46,9 @@ class OrderController extends Controller
                 ->with('error', 'Keranjang kosong.');
         }
 
-        // Validasi stok
         foreach ($carts as $cart) {
             if ($cart->quantity > $cart->product->stock) {
-                return back()->with('error', "Stok {$cart->product->name} tidak mencukupi.");
+                return back()->with('error', "Stok produk '{$cart->product->name}' tidak mencukupi. Tersedia: {$cart->product->stock}");
             }
         }
 
@@ -69,17 +70,14 @@ class OrderController extends Controller
                     'quantity'   => $cart->quantity,
                     'subtotal'   => $cart->quantity * $cart->product->price,
                 ]);
-
-                // Kurangi stok
                 $cart->product->decrement('stock', $cart->quantity);
             }
 
-            // Kosongkan keranjang
             Cart::where('user_id', auth::id())->delete();
         });
 
         return redirect()->route('pembeli.orders.index')
-            ->with('success', 'Pesanan berhasil dibuat. Silakan lakukan pembayaran.');
+            ->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran dan upload bukti transfer.');
     }
 
     public function index()
@@ -87,6 +85,7 @@ class OrderController extends Controller
         $orders = Order::where('user_id', auth::id())
             ->latest()
             ->paginate(10);
+
         return view('pembeli.orders.index', compact('orders'));
     }
 
@@ -94,25 +93,50 @@ class OrderController extends Controller
     {
         abort_if($order->user_id !== auth::id(), 403);
         $order->load('orderDetails.product');
+
         return view('pembeli.orders.show', compact('order'));
     }
 
+    /**
+     * Upload bukti pembayaran
+     */
     public function uploadBukti(Request $request, Order $order)
     {
+        // Pastikan pesanan milik pembeli yang login
         abort_if($order->user_id !== auth::id(), 403);
-        abort_if($order->status !== 'pending', 403);
+
+        // Hanya bisa upload jika status masih pending
+        abort_if($order->status !== 'pending', 403, 'Bukti pembayaran sudah pernah diupload.');
 
         $request->validate([
-            'payment_proof' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'payment_proof' => [
+                'required',
+                'file',
+                'image',
+                'mimes:jpg,jpeg,png',
+                'max:2048', // max 2MB
+            ],
+        ], [
+            'payment_proof.required' => 'File bukti pembayaran wajib diupload.',
+            'payment_proof.image'    => 'File harus berupa gambar.',
+            'payment_proof.mimes'    => 'Format file harus JPG atau PNG.',
+            'payment_proof.max'      => 'Ukuran file maksimal 2MB.',
         ]);
 
-        $path = $request->file('payment_proof')->store('payment_proofs', 'public');
+        // Hapus bukti lama jika ada (seharusnya tidak ada, tapi berjaga-jaga)
+        if ($order->payment_proof) {
+            Storage::disk('public')->delete($order->payment_proof);
+        }
+
+        // Simpan file baru
+        $path = $request->file('payment_proof')
+            ->store('payment_proofs/' . date('Y/m'), 'public');
 
         $order->update([
             'payment_proof' => $path,
             'status'        => 'menunggu_verifikasi',
         ]);
 
-        return back()->with('success', 'Bukti pembayaran berhasil diupload.');
+        return back()->with('success', 'Bukti pembayaran berhasil diupload! Karyawan akan memverifikasi pembayaran Anda.');
     }
 }

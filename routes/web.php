@@ -47,7 +47,13 @@ Route::prefix('admin')
     Route::get('/laporan', [Admin\OrderController::class, 'laporan'])->name('laporan');
 
     Route::get('/pembeli', [Admin\PembeliController::class, 'index'])->name('pembeli.index');
+
+    // Tambahkan di dalam group admin:
+    Route::get('/laporan', [Admin\OrderController::class, 'laporan'])->name('laporan');
+    Route::get('/laporan/export-excel', [Admin\OrderController::class, 'exportExcel'])->name('laporan.export-excel');
+    Route::get('/laporan/export-pdf', [Admin\OrderController::class, 'exportPdf'])->name('laporan.export-pdf');
 });
+
 
 Route::prefix('karyawan')
     ->name('karyawan.')

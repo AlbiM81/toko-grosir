@@ -1,64 +1,52 @@
+{{-- resources/views/pembeli/orders/index.blade.php --}}
 @extends('layouts.pembeli')
-
-@section('title','Pesanan')
+@section('title', 'Pesanan Saya')
 
 @section('content')
-
 <div class="container py-4">
+    <h5 class="fw-bold mb-4"><i class="bi bi-receipt me-2"></i>Riwayat Pesanan</h5>
 
-<h3 class="fw-bold mb-4">
-    Riwayat Pesanan
-</h3>
-
-@forelse($orders as $order)
-
-<div class="card mb-3">
-
-<div class="card-body">
-
-<div class="d-flex justify-content-between">
-
-<div>
-
-<h5>
-Pesanan #{{ $order->id }}
-</h5>
-
-<p>
-Rp {{ number_format($order->total_price,0,',','.') }}
-</p>
-
+    @if($orders->isEmpty())
+        <div class="text-center py-5">
+            <i class="bi bi-bag-x fs-1 text-muted"></i>
+            <p class="text-muted mt-2">Belum ada pesanan</p>
+            <a href="{{ route('pembeli.products.index') }}" class="btn btn-primary">Mulai Belanja</a>
+        </div>
+    @else
+        @foreach($orders as $order)
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-bold">Pesanan #{{ $order->id }}</div>
+                        <small class="text-muted">{{ $order->created_at->format('d M Y, H:i') }}</small>
+                    </div>
+                    <span class="badge bg-{{ $order->status_badge }}">{{ $order->status_label }}</span>
+                </div>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="fw-semibold text-primary">
+                        Rp {{ number_format($order->total_price, 0, ',', '.') }}
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if($order->status === 'pending')
+                            <a href="{{ route('pembeli.orders.show', $order) }}"
+                               class="btn btn-sm btn-warning">
+                                <i class="bi bi-upload me-1"></i>Upload Bukti
+                            </a>
+                        @endif
+                        <a href="{{ route('pembeli.orders.show', $order) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i>Detail
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endforeach
+        <div class="d-flex justify-content-center mt-4">
+            {{ $orders->links() }}
+        </div>
+    @endif
 </div>
-
-<div>
-
-<span class="badge bg-primary">
-{{ $order->status_label }}
-</span>
-
-</div>
-
-</div>
-
-<a href="{{ route('pembeli.orders.show',$order) }}"
-   class="btn btn-outline-primary">
-    Detail
-</a>
-
-</div>
-
-</div>
-
-@empty
-
-<div class="alert alert-info">
-Belum ada pesanan.
-</div>
-
-@endforelse
-
-{{ $orders->links() }}
-
-</div>
-
 @endsection
