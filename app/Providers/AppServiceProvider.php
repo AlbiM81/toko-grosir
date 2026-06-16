@@ -1,24 +1,37 @@
 <?php
 
+// app/Providers/AppServiceProvider.php
+
 namespace App\Providers;
+
+use App\Services\MidtransService;
 
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
+
 {
-    /**
-     * Register any application services.
-     */
+
     public function register(): void
+
     {
-        //
+
+        // Daftarkan MidtransService sebagai singleton
+
+        $this->app->singleton(MidtransService::class, function ($app) {
+
+            return new MidtransService();
+
+        });
+
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
+
     {
+
         //
+
     }
+
 }

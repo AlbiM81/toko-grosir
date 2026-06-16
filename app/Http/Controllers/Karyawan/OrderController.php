@@ -32,8 +32,11 @@ class OrderController extends Controller
         abort_if($order->status !== 'menunggu_verifikasi', 403);
 
         $order->update([
-            'status'       => 'diproses',
-            'processed_by' => auth::id(),
+            'status'         => 'diproses',
+            'payment_status' => 'settlement',
+            'paid_at'        => now(),
+            'processed_by'   => Auth::id(),
+            'payment_method' => $order->payment_method ?? 'manual',
         ]);
 
         return back()->with('success', 'Pembayaran berhasil diverifikasi. Pesanan sedang diproses.');
@@ -46,6 +49,21 @@ class OrderController extends Controller
         $order->update(['status' => 'dikirim']);
 
         return back()->with('success', 'Status pesanan berubah menjadi "Dikirim".');
+    }
+
+    public function selesaikanPembayaran(Order $order)
+    {
+        abort_if(!in_array($order->status, ['pending', 'menunggu_verifikasi'], true), 403);
+
+        $order->update([
+            'status'         => 'diproses',
+            'payment_status' => 'settlement',
+            'paid_at'        => now(),
+            'processed_by'   => Auth::id(),
+            'payment_method' => $order->payment_method ?? 'manual',
+        ]);
+
+        return back()->with('success', 'Pembayaran telah diselesaikan dan status pesanan diubah menjadi diproses.');
     }
 
     public function selesai(Order $order)

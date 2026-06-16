@@ -128,109 +128,53 @@
                 </div>
             </div>
 
-            {{-- ═══ SECTION UPLOAD BUKTI PEMBAYARAN ═══ --}}
+            {{-- ═══ SECTION PEMBAYARAN VIA MIDTRANS ═══ --}}
             @if($order->status === 'pending')
-            <div class="card border-0 shadow-sm border-start border-warning border-4">
-                <div class="card-header bg-warning bg-opacity-10 border-0 pt-3 pb-2">
-                    <h6 class="fw-bold mb-0 text-warning">
-                        <i class="bi bi-upload me-2"></i>Upload Bukti Pembayaran
+            <div class="card border-0 shadow-sm border-start border-primary border-4">
+                <div class="card-header bg-primary bg-opacity-10 border-0 pt-3 pb-2">
+                    <h6 class="fw-bold mb-0 text-primary">
+                        <i class="bi bi-credit-card me-2"></i>Pembayaran via Midtrans
                     </h6>
                 </div>
                 <div class="card-body">
-                    {{-- Info Rekening --}}
-                    <div class="alert alert-info d-flex gap-3 mb-4">
-                        <i class="bi bi-bank2 fs-4 flex-shrink-0 text-info"></i>
-                        <div>
-                            <div class="fw-semibold mb-1">Informasi Rekening Tujuan</div>
-                            <table class="table table-sm table-borderless mb-0" style="font-size:0.9rem;">
-                                <tr><td>Bank</td><td>: <strong>BCA</strong></td></tr>
-                                <tr><td>No. Rekening</td><td>: <strong>1234567890</strong></td></tr>
-                                <tr><td>Atas Nama</td><td>: <strong>Toko Grosir Sejahtera</strong></td></tr>
-                                <tr><td>Jumlah Transfer</td><td>: <strong class="text-danger fs-5">Rp {{ number_format($order->total_price, 0, ',', '.') }}</strong></td></tr>
-                            </table>
-                        </div>
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        Klik tombol di bawah untuk menyelesaikan pembayaran melalui Midtrans dengan metode yang aman.
                     </div>
 
-                    {{-- Form Upload --}}
-                    <form method="POST"
-                          action="{{ route('pembeli.orders.upload-bukti', $order) }}"
-                          enctype="multipart/form-data"
-                          id="formUploadBukti">
-                        @csrf
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">
-                                Foto Bukti Transfer
-                                <span class="text-danger">*</span>
-                            </label>
-
-                            {{-- Drop Zone Upload --}}
-                            <div class="border border-2 border-dashed rounded-3 p-4 text-center"
-                                 id="dropZone"
-                                 style="cursor:pointer;border-color:#dee2e6 !important;transition:all 0.3s;">
-                                <div id="uploadPlaceholder">
-                                    <i class="bi bi-cloud-upload fs-1 text-muted"></i>
-                                    <p class="mb-1 fw-semibold">Klik atau drag & drop foto di sini</p>
-                                    <small class="text-muted">Format: JPG, PNG | Maksimal: 2MB</small>
-                                </div>
-                                <div id="previewContainer" class="d-none">
-                                    <img id="previewImg" src="" class="img-fluid rounded" style="max-height:250px;" alt="Preview">
-                                    <p class="mt-2 text-success small" id="previewName"></p>
-                                </div>
-                            </div>
-
-                            <input type="file"
-                                   name="payment_proof"
-                                   id="payment_proof"
-                                   accept="image/jpg,image/jpeg,image/png"
-                                   class="d-none @error('payment_proof') is-invalid @enderror">
-
-                            @error('payment_proof')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                        <div>
+                            <div class="fw-semibold">Total yang harus dibayar</div>
+                            <div class="text-danger fs-4 fw-bold">Rp {{ number_format($order->total_price, 0, ',', '.') }}</div>
+                            <small class="text-muted">Pesanan akan otomatis berubah status setelah pembayaran berhasil.</small>
                         </div>
 
-                        <button type="submit" class="btn btn-warning fw-semibold px-4" id="btnUpload" disabled>
-                            <i class="bi bi-upload me-2"></i>Upload Bukti Pembayaran
+                        <button type="button" class="btn btn-primary btn-lg px-4" id="btnPayNow" {{ empty($order->snap_token) ? 'disabled' : '' }}>
+                            <i class="bi bi-credit-card me-2"></i>Bayar Sekarang
                         </button>
-                        <small class="text-muted ms-2">Pesanan akan diverifikasi dalam 1×24 jam</small>
-                    </form>
+
+                        @if(empty($order->snap_token))
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnRefreshToken">
+                                <i class="bi bi-arrow-repeat me-2"></i>Siapkan Token Pembayaran
+                            </button>
+                        @endif
+                    </div>
                 </div>
             </div>
-
-            @elseif($order->payment_proof)
-            {{-- Tampilkan bukti yang sudah diupload --}}
+            @else
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom pt-3 pb-2">
                     <h6 class="fw-bold mb-0">
-                        <i class="bi bi-image me-2 text-success"></i>Bukti Pembayaran
-                        <span class="badge bg-success ms-2">Sudah Diupload</span>
+                        <i class="bi bi-shield-check me-2 text-success"></i>Status Pembayaran
                     </h6>
                 </div>
-                <div class="card-body text-center">
-                    <img src="{{ asset('storage/' . $order->payment_proof) }}"
-                         class="img-fluid rounded shadow-sm"
-                         style="max-height:300px;cursor:pointer;"
-                         alt="Bukti Pembayaran"
-                         data-bs-toggle="modal"
-                         data-bs-target="#modalBukti">
-                    <p class="text-muted small mt-2">Klik gambar untuk memperbesar</p>
-                </div>
-            </div>
-
-            {{-- Modal Zoom Gambar --}}
-            <div class="modal fade" id="modalBukti" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header border-0">
-                            <h6 class="modal-title fw-bold">Bukti Pembayaran - Pesanan #{{ $order->id }}</h6>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body text-center p-2">
-                            <img src="{{ asset('storage/' . $order->payment_proof) }}"
-                                 class="img-fluid" alt="Bukti Pembayaran">
-                        </div>
-                    </div>
+                <div class="card-body">
+                    <p class="mb-0 text-muted">
+                        Pembayaran untuk pesanan ini sudah diproses melalui Midtrans.
+                        @if($order->payment_method)
+                            Metode pembayaran: <strong>{{ $order->payment_method_label }}</strong>.
+                        @endif
+                    </p>
                 </div>
             </div>
             @endif
@@ -278,71 +222,101 @@
 </div>
 
 @push('scripts')
+<script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}" data-client-key="{{ $clientKey }}"></script>
 <script>
-// Drop zone & preview upload
-const dropZone   = document.getElementById('dropZone');
-const fileInput  = document.getElementById('payment_proof');
-const btnUpload  = document.getElementById('btnUpload');
-const placeholder = document.getElementById('uploadPlaceholder');
-const previewCont = document.getElementById('previewContainer');
-const previewImg  = document.getElementById('previewImg');
-const previewName = document.getElementById('previewName');
+    const btnPayNow = document.getElementById('btnPayNow');
+    const btnRefreshToken = document.getElementById('btnRefreshToken');
+    const snapToken = @json($order->snap_token ?? null);
 
-if (dropZone) {
-    dropZone.addEventListener('click', () => fileInput.click());
+    function showTokenStatus(message, type = 'info') {
+        const alertBox = document.createElement('div');
+        alertBox.className = `alert alert-${type} mt-3 mb-0 small`;
+        alertBox.innerHTML = `<i class="bi bi-info-circle me-2"></i>${message}`;
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#0d6efd';
-        dropZone.style.background  = 'rgba(13,110,253,0.05)';
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.borderColor = '#dee2e6';
-        dropZone.style.background  = '';
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#dee2e6';
-        dropZone.style.background  = '';
-        const file = e.dataTransfer.files[0];
-        if (file) handleFile(file);
-    });
-
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files[0]) handleFile(fileInput.files[0]);
-    });
-
-    function handleFile(file) {
-        // Validasi ukuran
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran file terlalu besar. Maksimal 2MB.');
-            return;
+        const container = document.querySelector('.card-body');
+        if (container) {
+            container.appendChild(alertBox);
         }
-        // Validasi tipe
-        if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
-            alert('Format file harus JPG atau PNG.');
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            previewImg.src = e.target.result;
-            previewName.textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
-            placeholder.classList.add('d-none');
-            previewCont.classList.remove('d-none');
-            btnUpload.disabled = false;
-            dropZone.style.borderColor = '#198754';
-        };
-        reader.readAsDataURL(file);
-
-        // Assign ke input file
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        fileInput.files = dt.files;
     }
-}
+
+    async function refreshSnapToken() {
+        if (!btnRefreshToken && !btnPayNow) return;
+
+        if (btnRefreshToken) {
+            btnRefreshToken.disabled = true;
+            btnRefreshToken.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Memuat token...';
+        }
+
+        try {
+            const response = await fetch('{{ route("pembeli.orders.refresh-snap-token", $order) }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Gagal membuat token pembayaran.');
+            }
+
+            if (btnRefreshToken) {
+                btnRefreshToken.remove();
+            }
+
+            window.location.reload();
+        } catch (error) {
+            if (btnRefreshToken) {
+                btnRefreshToken.disabled = false;
+                btnRefreshToken.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Siapkan Token Pembayaran';
+            }
+            showTokenStatus(error.message, 'danger');
+        }
+    }
+
+    if (btnPayNow) {
+        btnPayNow.disabled = !snapToken;
+    }
+
+    if (btnRefreshToken) {
+        btnRefreshToken.addEventListener('click', refreshSnapToken);
+        refreshSnapToken();
+    }
+
+    if (btnPayNow) {
+        btnPayNow.addEventListener('click', function () {
+
+            if (!snapToken) {
+                showTokenStatus('Token pembayaran belum siap. Klik tombol “Siapkan Token Pembayaran” terlebih dahulu.', 'warning');
+                return;
+            }
+
+            if (typeof window.snap === 'undefined') {
+                alert('Midtrans belum siap. Silakan refresh halaman.');
+                return;
+            }
+
+            window.snap.pay(snapToken, {
+                onSuccess: function (result) {
+                    window.location.href = '{{ route('pembeli.orders.payment-finish') }}?order_id=' + encodeURIComponent(result.order_id || '') + '&status_code=' + encodeURIComponent(result.status_code || '') + '&transaction_status=' + encodeURIComponent(result.transaction_status || '');
+                },
+                onPending: function (result) {
+                    window.location.href = '{{ route('pembeli.orders.payment-finish') }}?order_id=' + encodeURIComponent(result.order_id || '') + '&status_code=' + encodeURIComponent(result.status_code || '') + '&transaction_status=' + encodeURIComponent(result.transaction_status || '');
+                },
+                onError: function () {
+                    alert('Pembayaran gagal. Silakan coba lagi.');
+                },
+                onClose: function () {
+                    alert('Anda menutup popup pembayaran.');
+                }
+            });
+        });
+    }
 </script>
+
 @endpush
+
 @endsection

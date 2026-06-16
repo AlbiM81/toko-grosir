@@ -56,12 +56,22 @@
                 <hr>
 
                 {{-- Tombol aksi berdasarkan status --}}
+                @if(in_array($order->status, ['pending', 'menunggu_verifikasi'], true))
+                <form action="{{ route('karyawan.orders.bayar-selesai', $order) }}" method="POST" class="mb-2">
+                    @csrf @method('PATCH')
+                    <button type="submit" class="btn btn-success w-100"
+                        onclick="return confirm('Tandai pembayaran ini sebagai sudah selesai?')">
+                        <i class="bi bi-check-circle me-1"></i> Selesaikan Pembayaran
+                    </button>
+                </form>
+                @endif
+
                 @if($order->status === 'menunggu_verifikasi')
                 <form action="{{ route('karyawan.orders.verifikasi', $order) }}" method="POST">
                     @csrf @method('PATCH')
-                    <button type="submit" class="btn btn-success w-100 mb-2"
-                        onclick="return confirm('Konfirmasi pembayaran ini?')">
-                        <i class="bi bi-check-circle me-1"></i> Verifikasi Pembayaran
+                    <button type="submit" class="btn btn-outline-primary w-100 mb-2"
+                        onclick="return confirm('Verifikasi status pesanan ini?')">
+                        <i class="bi bi-shield-check me-1"></i> Verifikasi Pesanan
                     </button>
                 </form>
                 @endif

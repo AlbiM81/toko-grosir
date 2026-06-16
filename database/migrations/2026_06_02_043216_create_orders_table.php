@@ -18,7 +18,8 @@ return new class extends Migration
                 'menunggu_verifikasi',
                 'diproses',
                 'dikirim',
-                'selesai'
+                'selesai',
+                'dibatalkan',          
             ])->default('pending');
             $table->string('payment_proof')->nullable();
             $table->foreignId('processed_by')->nullable()->constrained('users')->onDelete('set null');

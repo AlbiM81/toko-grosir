@@ -24,6 +24,11 @@ Route::middleware('auth')->group(function () {
         ->name('profile.destroy');
 });
 
+// ✅ FIX: Route Midtrans webhook (tanpa CSRF / di luar middleware auth)
+Route::post('/midtrans/notification', [\App\Http\Controllers\MidtransController::class, 'notification'])
+    ->name('midtrans.notification')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
 
 Route::prefix('admin')
     ->name('admin.')
@@ -44,11 +49,10 @@ Route::prefix('admin')
 
     Route::get('/orders', [Admin\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [Admin\OrderController::class, 'show'])->name('orders.show');
-    Route::get('/laporan', [Admin\OrderController::class, 'laporan'])->name('laporan');
 
     Route::get('/pembeli', [Admin\PembeliController::class, 'index'])->name('pembeli.index');
 
-    // Tambahkan di dalam group admin:
+    // ✅ FIX: Hapus duplikat route laporan, sisakan satu set saja
     Route::get('/laporan', [Admin\OrderController::class, 'laporan'])->name('laporan');
     Route::get('/laporan/export-excel', [Admin\OrderController::class, 'exportExcel'])->name('laporan.export-excel');
     Route::get('/laporan/export-pdf', [Admin\OrderController::class, 'exportPdf'])->name('laporan.export-pdf');
@@ -68,6 +72,7 @@ Route::prefix('karyawan')
     Route::get('/orders', [Karyawan\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [Karyawan\OrderController::class, 'show'])->name('orders.show');
     Route::patch('/orders/{order}/verifikasi', [Karyawan\OrderController::class, 'verifikasiPembayaran'])->name('orders.verifikasi');
+    Route::patch('/orders/{order}/bayar-selesai', [Karyawan\OrderController::class, 'selesaikanPembayaran'])->name('orders.bayar-selesai');
     Route::patch('/orders/{order}/kirim', [Karyawan\OrderController::class, 'kirimBarang'])->name('orders.kirim');
     Route::patch('/orders/{order}/selesai', [Karyawan\OrderController::class, 'selesai'])->name('orders.selesai');
 });
@@ -93,5 +98,13 @@ Route::prefix('pembeli')
     Route::post('/orders', [Pembeli\OrderController::class, 'store'])->name('orders.store');
     Route::get('/orders', [Pembeli\OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [Pembeli\OrderController::class, 'show'])->name('orders.show');
-    Route::post('/orders/{order}/upload-bukti', [Pembeli\OrderController::class, 'uploadBukti'])->name('orders.upload-bukti');
+    Route::post('/orders/{order}/refresh-snap-token', [Pembeli\OrderController::class, 'refreshSnapToken'])
+        ->name('orders.refresh-snap-token');
+
+    // ✅ FIX: tambahkan route payment-finish yang dipakai MidtransService callback
+    Route::get('/orders/payment/finish', [Pembeli\OrderController::class, 'paymentFinish'])
+        ->name('orders.payment-finish');
+
+    Route::post('/orders/{order}/upload-bukti', [Pembeli\OrderController::class, 'uploadBukti'])
+        ->name('orders.upload-bukti');
 });
