@@ -29,12 +29,6 @@
                         Rp {{ number_format($order->total_price, 0, ',', '.') }}
                     </div>
                     <div class="d-flex gap-2">
-                        @if($order->status === 'pending')
-                            <a href="{{ route('pembeli.orders.show', $order) }}"
-                               class="btn btn-sm btn-warning">
-                                <i class="bi bi-upload me-1"></i>Upload Bukti
-                            </a>
-                        @endif
                         <a href="{{ route('pembeli.orders.show', $order) }}"
                            class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye me-1"></i>Detail

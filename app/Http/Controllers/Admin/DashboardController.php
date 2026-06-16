@@ -15,23 +15,28 @@ class DashboardController extends Controller
     public function index()
     {
         // ── STATISTIK UTAMA ─────────────────────────────────────────
-        $totalPenjualan = Order::where('status', 'selesai')->sum('total_price');
-        $totalOrder     = Order::count();
-        $totalProduk    = Product::count();
-        $totalPembeli   = User::where('role', 'pembeli')->count();
-        $totalKaryawan  = User::where('role', 'karyawan')->count();
-        $stokHabis      = Product::where('stock', 0)->count();
-        $stokRendah     = Product::where('stock', '>', 0)->where('stock', '<=', 10)->count();
+        $orders = DB::table('orders');
+        $products = DB::table('products');
+        $users = DB::table('users');
+
+        $totalPenjualan = (clone $orders)->where('status', 'selesai')->sum('total_price');
+        $totalOrder     = (clone $orders)->count();
+        $totalProduk    = (clone $products)->count();
+        $totalPembeli   = (clone $users)->where('role', 'pembeli')->count();
+        $totalKaryawan  = (clone $users)->where('role', 'karyawan')->count();
+        $stokHabis      = (clone $products)->where('stock', 0)->count();
+        $stokRendah     = (clone $products)->where('stock', '>', 0)->where('stock', '<=', 10)->count();
 
         // Order menunggu aksi
-        $orderPending      = Order::where('status', 'pending')->count();
-        $orderMenunggu     = Order::where('status', 'menunggu_verifikasi')->count();
-        $orderDiproses     = Order::where('status', 'diproses')->count();
-        $orderDikirim      = Order::where('status', 'dikirim')->count();
-        $orderSelesai      = Order::where('status', 'selesai')->count();
+        $orderPending      = (clone $orders)->where('status', 'pending')->count();
+        $orderMenunggu     = (clone $orders)->where('status', 'menunggu_verifikasi')->count();
+        $orderDiproses     = (clone $orders)->where('status', 'diproses')->count();
+        $orderDikirim      = (clone $orders)->where('status', 'dikirim')->count();
+        $orderSelesai      = (clone $orders)->where('status', 'selesai')->count();
 
         // ── CHART 1: Penjualan 7 Hari Terakhir (Line Chart) ─────────
-        $penjualan7Hari = Order::where('status', 'selesai')
+        $penjualan7Hari = DB::table('orders')
+            ->where('status', 'selesai')
             ->where('created_at', '>=', now()->subDays(6)->startOfDay())
             ->select(
                 DB::raw('DATE(created_at) as tanggal'),
@@ -55,7 +60,8 @@ class DashboardController extends Controller
         }
 
         // ── CHART 2: Penjualan 12 Bulan Terakhir (Bar Chart) ────────
-        $penjualan12Bulan = Order::where('status', 'selesai')
+        $penjualan12Bulan = DB::table('orders')
+            ->where('status', 'selesai')
             ->where('created_at', '>=', now()->subMonths(11)->startOfMonth())
             ->select(
                 DB::raw('YEAR(created_at) as tahun'),
