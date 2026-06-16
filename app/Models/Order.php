@@ -17,6 +17,17 @@ class Order extends Model
         'processed_by',
         'address',
         'phone',
+
+        // Kolom Midtrans
+        'snap_token',
+        'midtrans_transaction_id',
+        'payment_method',
+        'payment_status',
+        'paid_at',
+    ];
+
+    protected $casts = [
+        'paid_at' => 'datetime',
     ];
 
     public function user()
@@ -34,27 +45,49 @@ class Order extends Model
         return $this->hasMany(OrderDetail::class);
     }
 
+    // ── Accessor status label ──────────────────────────────
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending'              => 'Menunggu Pembayaran',
             'menunggu_verifikasi'  => 'Menunggu Verifikasi',
             'diproses'             => 'Sedang Diproses',
             'dikirim'              => 'Sedang Dikirim',
             'selesai'              => 'Selesai',
+            'dibatalkan'           => 'Dibatalkan',
             default                => ucfirst($this->status),
         };
     }
 
     public function getStatusBadgeAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending'              => 'warning',
             'menunggu_verifikasi'  => 'info',
             'diproses'             => 'primary',
             'dikirim'              => 'secondary',
             'selesai'              => 'success',
+            'dibatalkan'           => 'danger',
             default                => 'dark',
+        };
+    }
+
+    // ── Accessor metode pembayaran ──────────────────────────────
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        return match ($this->payment_method) {
+            'credit_card'    => 'Kartu Kredit',
+            'bank_transfer'  => 'Transfer Bank',
+            'echannel'       => 'Mandiri Bill',
+            'bca_klikbca'    => 'KlikBCA',
+            'bca_klikpay'    => 'BCA KlikPay',
+            'cimb_clicks'    => 'CIMB Clicks',
+            'danamon_online' => 'Danamon Online',
+            'gopay'          => 'GoPay',
+            'shopeepay'      => 'ShopeePay',
+            'qris'           => 'QRIS',
+            'akulaku'        => 'Akulaku',
+            default          => ucfirst(str_replace('_', ' ', $this->payment_method ?? '-')),
         };
     }
 }
